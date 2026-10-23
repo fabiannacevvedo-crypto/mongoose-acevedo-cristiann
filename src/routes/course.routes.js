@@ -5,14 +5,14 @@ import {
   getCourseById,
   updateCourse,
   deleteCourse,
-} from "../controllers/couser.controller.js";
+} from "../controllers/course.controller.js";
 import {
   createCourseValidator,
   updateCourseValidator,
-} from "../middlewares/couser.validator.js";
+} from "../middlewares/course.validator.js";
 import { paramIdValidator } from "../middlewares/validator.middleware.js";
 
-export const courserRouter = Router();
+export const courseRouter = Router();
 
 courseRouter.post("/courses", createCourseValidator, createCourse);
 courseRouter.get("/courses", getAllCourses);

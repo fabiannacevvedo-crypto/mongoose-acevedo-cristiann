@@ -4,7 +4,7 @@ import cors from "cors";
 import "dotenv/config";
 import { startDB } from "./src/config/database.js";
 import { userRouter } from "./src/routes/user.routes.js";
-import { courserRouter } from "./src/routes/couser.routes.js";
+import { courseRouter } from "./src/routes/course.routes.js";
 import { profileRouter } from "./src/routes/profile.routes.js";
 import { tagRouter } from "./src/routes/tag.routes.js";
 

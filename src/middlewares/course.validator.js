@@ -14,7 +14,7 @@ export const createCourseValidator = [
     .custom(async (value) => {
       const course = await CourseModel.findOne({
         title: value,
-        isDeleted: false,
+        deletedAt: null,
       });
       if (course) {
         throw new Error("Ya existe un curso registrado con ese título");
@@ -35,7 +35,6 @@ export const createCourseValidator = [
     .isFloat({ min: 0 })
     .withMessage("El precio debe ser un número mayor o igual a 0"),
 
-  // Relación 1:N: Validar que el instructor exista
   body("instructor")
     .notEmpty()
     .withMessage("El instructor es obligatorio")
@@ -44,7 +43,7 @@ export const createCourseValidator = [
     .custom(async (value) => {
       const instructor = await UserModel.findOne({
         _id: value,
-        isDeleted: false,
+        deletedAt: null,
       });
       if (!instructor) {
         throw new Error(
@@ -54,7 +53,6 @@ export const createCourseValidator = [
       return true;
     }),
 
-  // Relación N:M: Validar tags iniciales si se envían
   body("tags")
     .optional()
     .isArray()
@@ -65,7 +63,7 @@ export const createCourseValidator = [
     .isMongoId()
     .withMessage("Cada etiqueta debe ser un ObjectId válido")
     .custom(async (value) => {
-      const tag = await TagModel.findOne({ _id: value, isDeleted: false });
+      const tag = await TagModel.findOne({ _id: value, deletedAt: null });
       if (!tag) {
         throw new Error(
           `La etiqueta con ID ${value} no existe o ha sido eliminada`
@@ -91,7 +89,7 @@ export const updateCourseValidator = [
       const course = await CourseModel.findOne({
         title: value,
         _id: { $ne: req.params.id },
-        isDeleted: false,
+        deletedAt: null,
       });
       if (course) {
         throw new Error("Ya existe otro curso registrado con ese título");
@@ -117,7 +115,7 @@ export const updateCourseValidator = [
     .custom(async (value) => {
       const instructor = await UserModel.findOne({
         _id: value,
-        isDeleted: false,
+        deletedAt: null,
       });
       if (!instructor) {
         throw new Error(
@@ -140,7 +138,6 @@ export const updateCourseValidator = [
   validateResult,
 ];
 
-// Validador obligatorio para endpoint N:M (agregar nuevo vínculo entre curso y etiqueta)
 export const addTagToCourseValidator = [
   param("id")
     .isMongoId()
@@ -148,7 +145,7 @@ export const addTagToCourseValidator = [
     .custom(async (value) => {
       const course = await CourseModel.findOne({
         _id: value,
-        isDeleted: false,
+        deletedAt: null,
       });
       if (!course) {
         throw new Error("El curso no existe o ha sido eliminado");
@@ -162,16 +159,14 @@ export const addTagToCourseValidator = [
     .isMongoId()
     .withMessage("El campo tagId debe ser un ObjectId válido")
     .custom(async (value, { req }) => {
-      // 1. Validar que la etiqueta exista y no esté eliminada
-      const tag = await TagModel.findOne({ _id: value, isDeleted: false });
+      const tag = await TagModel.findOne({ _id: value, deletedAt: null });
       if (!tag) {
         throw new Error("La etiqueta no existe o ha sido eliminada");
       }
 
-      // 2. Validar que el vínculo no esté duplicado
       const course = await CourseModel.findOne({
         _id: req.params.id,
-        isDeleted: false,
+        deletedAt: null,
       });
       if (course && course.tags.some((t) => t.toString() === value)) {
         throw new Error("El vínculo entre el curso y la etiqueta ya existe");
