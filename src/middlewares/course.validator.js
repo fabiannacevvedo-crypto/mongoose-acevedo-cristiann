@@ -12,10 +12,7 @@ export const createCourseValidator = [
     .isLength({ min: 3, max: 120 })
     .withMessage("El título debe tener entre 3 y 120 caracteres")
     .custom(async (value) => {
-      const course = await CourseModel.findOne({
-        title: value,
-        deletedAt: null,
-      });
+      const course = await CourseModel.findOne({ title: value, deletedAt: null });
       if (course) {
         throw new Error("Ya existe un curso registrado con ese título");
       }
@@ -33,7 +30,8 @@ export const createCourseValidator = [
     .notEmpty()
     .withMessage("El precio es obligatorio")
     .isFloat({ min: 0 })
-    .withMessage("El precio debe ser un número mayor o igual a 0"),
+    .withMessage("El precio debe ser un número mayor o igual a 0")
+    .toFloat(),
 
   body("instructor")
     .notEmpty()
@@ -41,14 +39,9 @@ export const createCourseValidator = [
     .isMongoId()
     .withMessage("El instructor debe ser un ObjectId válido")
     .custom(async (value) => {
-      const instructor = await UserModel.findOne({
-        _id: value,
-        deletedAt: null,
-      });
+      const instructor = await UserModel.findOne({ _id: value, deletedAt: null });
       if (!instructor) {
-        throw new Error(
-          "El instructor especificado no existe o ha sido eliminado"
-        );
+        throw new Error("El instructor especificado no existe o ha sido eliminado");
       }
       return true;
     }),
@@ -65,9 +58,7 @@ export const createCourseValidator = [
     .custom(async (value) => {
       const tag = await TagModel.findOne({ _id: value, deletedAt: null });
       if (!tag) {
-        throw new Error(
-          `La etiqueta con ID ${value} no existe o ha sido eliminada`
-        );
+        throw new Error(`La etiqueta con ID ${value} no existe o ha sido eliminada`);
       }
       return true;
     }),
@@ -106,21 +97,17 @@ export const updateCourseValidator = [
   body("price")
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("El precio debe ser un número mayor o igual a 0"),
+    .withMessage("El precio debe ser un número mayor o igual a 0")
+    .toFloat(),
 
   body("instructor")
     .optional()
     .isMongoId()
     .withMessage("El instructor debe ser un ObjectId válido")
     .custom(async (value) => {
-      const instructor = await UserModel.findOne({
-        _id: value,
-        deletedAt: null,
-      });
+      const instructor = await UserModel.findOne({ _id: value, deletedAt: null });
       if (!instructor) {
-        throw new Error(
-          "El instructor especificado no existe o ha sido eliminado"
-        );
+        throw new Error("El instructor especificado no existe o ha sido eliminado");
       }
       return true;
     }),
@@ -133,7 +120,14 @@ export const updateCourseValidator = [
   body("tags.*")
     .optional()
     .isMongoId()
-    .withMessage("Cada etiqueta debe ser un ObjectId válido"),
+    .withMessage("Cada etiqueta debe ser un ObjectId válido")
+    .custom(async (value) => {
+      const tag = await TagModel.findOne({ _id: value, deletedAt: null });
+      if (!tag) {
+        throw new Error(`La etiqueta con ID ${value} no existe o ha sido eliminada`);
+      }
+      return true;
+    }),
 
   validateResult,
 ];
@@ -143,10 +137,7 @@ export const addTagToCourseValidator = [
     .isMongoId()
     .withMessage("El ID del curso debe ser un ObjectId válido")
     .custom(async (value) => {
-      const course = await CourseModel.findOne({
-        _id: value,
-        deletedAt: null,
-      });
+      const course = await CourseModel.findOne({ _id: value, deletedAt: null });
       if (!course) {
         throw new Error("El curso no existe o ha sido eliminado");
       }
@@ -164,10 +155,7 @@ export const addTagToCourseValidator = [
         throw new Error("La etiqueta no existe o ha sido eliminada");
       }
 
-      const course = await CourseModel.findOne({
-        _id: req.params.id,
-        deletedAt: null,
-      });
+      const course = await CourseModel.findOne({ _id: req.params.id, deletedAt: null });
       if (course && course.tags.some((t) => t.toString() === value)) {
         throw new Error("El vínculo entre el curso y la etiqueta ya existe");
       }
@@ -181,9 +169,23 @@ export const addTagToCourseValidator = [
 export const removeTagFromCourseValidator = [
   param("id")
     .isMongoId()
-    .withMessage("El ID del curso debe ser un ObjectId válido"),
+    .withMessage("El ID del curso debe ser un ObjectId válido")
+    .custom(async (value) => {
+      const course = await CourseModel.findOne({ _id: value, deletedAt: null });
+      if (!course) {
+        throw new Error("El curso no existe o ha sido eliminado");
+      }
+      return true;
+    }),
   param("tagId")
     .isMongoId()
-    .withMessage("El ID de la etiqueta debe ser un ObjectId válido"),
+    .withMessage("El ID de la etiqueta debe ser un ObjectId válido")
+    .custom(async (value, { req }) => {
+      const course = await CourseModel.findOne({ _id: req.params.id, deletedAt: null });
+      if (course && !course.tags.some((t) => t.toString() === value)) {
+        throw new Error("El vínculo entre el curso y la etiqueta no existe");
+      }
+      return true;
+    }),
   validateResult,
 ];

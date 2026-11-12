@@ -12,7 +12,7 @@ export const createTagValidator = [
     .custom(async (value) => {
       const tag = await TagModel.findOne({
         name: new RegExp(`^${value}$`, "i"),
-        isDeleted: false,
+        deletedAt: null,
       });
       if (tag) {
         throw new Error("Ya existe una etiqueta activa con ese nombre");
@@ -43,7 +43,7 @@ export const updateTagValidator = [
       const tag = await TagModel.findOne({
         name: new RegExp(`^${value}$`, "i"),
         _id: { $ne: req.params.id },
-        isDeleted: false,
+        deletedAt: null,
       });
       if (tag) {
         throw new Error("Ya existe otra etiqueta activa con ese nombre");

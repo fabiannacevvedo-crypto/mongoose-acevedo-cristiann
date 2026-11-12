@@ -12,16 +12,13 @@ export const createProfileValidator = [
     .withMessage("El campo user debe ser un ObjectId válido")
     .custom(async (value) => {
       // Verificar que el usuario exista y no esté eliminado
-      const user = await UserModel.findOne({ _id: value, isDeleted: false });
+      const user = await UserModel.findOne({ _id: value, deletedAt: null });
       if (!user) {
         throw new Error("El usuario especificado no existe o ha sido eliminado");
       }
 
-      // Validar relación 1:1: Verificar que el usuario no tenga ya un perfil activo
-      const existingProfile = await ProfileModel.findOne({
-        user: value,
-        isDeleted: false,
-      });
+      // Validar relación 1:1: verificar que el usuario no tenga ya un perfil activo
+      const existingProfile = await ProfileModel.findOne({ user: value, deletedAt: null });
       if (existingProfile) {
         throw new Error(
           "El usuario ya posee un perfil activo. La relación 1:1 solo permite un perfil por usuario."
@@ -45,7 +42,7 @@ export const createProfileValidator = [
     .withMessage("El teléfono debe tener entre 6 y 30 caracteres"),
 
   body("website")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isURL()
     .withMessage("El sitio web debe ser una URL válida"),
@@ -77,7 +74,7 @@ export const updateProfileValidator = [
     .withMessage("El teléfono debe tener entre 6 y 30 caracteres"),
 
   body("website")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isURL()
     .withMessage("El sitio web debe ser una URL válida"),

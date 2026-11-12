@@ -16,11 +16,9 @@ export const createUserValidator = [
     .withMessage("El email es obligatorio")
     .isEmail()
     .withMessage("Debe proporcionar un email válido")
+    .normalizeEmail()
     .custom(async (value) => {
-      const user = await UserModel.findOne({
-        email: value.toLowerCase(),
-        isDeleted: false,
-      });
+      const user = await UserModel.findOne({ email: value, deletedAt: null });
       if (user) {
         throw new Error("El email ya se encuentra registrado por otro usuario");
       }
@@ -31,7 +29,8 @@ export const createUserValidator = [
     .notEmpty()
     .withMessage("La edad es obligatoria")
     .isInt({ min: 0, max: 120 })
-    .withMessage("La edad debe ser un número entero entre 0 y 120"),
+    .withMessage("La edad debe ser un número entero entre 0 y 120")
+    .toInt(),
 
   // Validación de la propiedad embebida 'address'
   body("address")
@@ -87,11 +86,12 @@ export const updateUserValidator = [
     .trim()
     .isEmail()
     .withMessage("Debe proporcionar un email válido")
+    .normalizeEmail()
     .custom(async (value, { req }) => {
       const user = await UserModel.findOne({
-        email: value.toLowerCase(),
+        email: value,
         _id: { $ne: req.params.id },
-        isDeleted: false,
+        deletedAt: null,
       });
       if (user) {
         throw new Error("El email ya se encuentra en uso por otro usuario");
@@ -102,7 +102,13 @@ export const updateUserValidator = [
   body("age")
     .optional()
     .isInt({ min: 0, max: 120 })
-    .withMessage("La edad debe ser un número entero entre 0 y 120"),
+    .withMessage("La edad debe ser un número entero entre 0 y 120")
+    .toInt(),
+
+  body("address")
+    .optional()
+    .isObject()
+    .withMessage("La dirección debe ser un objeto"),
 
   body("address.street")
     .optional()

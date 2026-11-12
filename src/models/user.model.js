@@ -51,10 +51,12 @@ const userSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-// Virtual para obtener los cursos dictados por este usuario (1:N inverso sin almacenar array)
+// Virtual populate: cursos dictados por este usuario (1:N inverso, sin almacenar array)
 userSchema.virtual("courses", {
   ref: "Course",
   localField: "_id",
